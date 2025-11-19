@@ -4,10 +4,11 @@ import android.bluetooth.BluetoothManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
-@InstallIn(Singleton::class)
+@InstallIn(SingletonComponent::class)
 object ModuleDI {
     @Provides
     fun getManager(application: MainApplication): BluetoothManager{
