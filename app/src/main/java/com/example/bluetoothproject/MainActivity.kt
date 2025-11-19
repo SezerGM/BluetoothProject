@@ -23,5 +23,6 @@ class MainActivity : AppCompatActivity() {
         if(bluetoothAdapter == null){
             Log.d("Bluetooth","Device not supported bluetooth")
         }
+
     }
 }

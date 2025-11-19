@@ -38,8 +38,6 @@ android {
 }
 
 dependencies {
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -48,4 +46,12 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    //DI
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+
+    //Other modules
+    implementation(project(":data"))
+    implementation(project(":domain"))
 }
