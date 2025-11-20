@@ -1,8 +1,12 @@
 package com.example.data.bluetooth
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.domain.repositories.BluetoothManagerRepository
 import javax.inject.Inject
@@ -20,6 +24,7 @@ class BluetoothManager @Inject constructor(
     }
 
     override suspend fun connect() {
+        val pairedDevices: Set<BluetoothDevice>
 
 
     }
