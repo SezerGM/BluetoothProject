@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -20,66 +21,60 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.bluetoothproject.databinding.ActivityMainBinding
+import com.example.bluetoothproject.recycler.AdapterMain
+import com.example.bluetoothproject.recycler.DeviceModel
+import com.example.bluetoothproject.ui.viewmodels.MainScreenViewModel
 import com.example.bluetoothproject.utils.BluetoothHandler
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
-
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var bluetoothManager: BluetoothManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
-    private lateinit var devices: String
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { }
 
-    private var isReceiverRegistered = false
-
-
-    private val receiver = object : BroadcastReceiver() {
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var viewModel: MainScreenViewModel
+    private lateinit var adapter: AdapterMain
+    private val bondReceiver = object : BroadcastReceiver(){
         override fun onReceive(context: Context?, intent: Intent?) {
-            Log.d("Bluetooth", "onReceive called with action: ${intent?.action}")
-            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
-                val action = intent?.action
-                when (action) {
-                    BluetoothDevice.ACTION_FOUND -> {
-                        val device: BluetoothDevice? = intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                        if (device != null) {
-                            val name = device.name ?: "Unknown"
-                            Log.d("Bluetooth", "Bluetooth found device: $name (${device.address})")
-                        }
-                        devices = device!!.name
+            val action = intent?.action
+            if (action == BluetoothDevice.ACTION_BOND_STATE_CHANGED){
+                val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                val bondState = intent?.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1)
+                when(bondState){
+                    BluetoothDevice.BOND_BONDED ->{
+
                     }
                 }
             }
+
         }
     }
-    val scanCalBack = object: ScanCallback(){
 
-        override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
-                val device = result?.device?.name
-                if(device != null){
-                    Log.d("Bluetooth", "Bluetooth found device: $device")
-                }
-            }
 
-        }
 
-        override fun onScanFailed(errorCode: Int) {
-            Log.d("Bluetooth", "Ble scanner failture")
-        }
-    }
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        val button: Button = findViewById<Button>(R.id.ButtonBl)
-        val buttonStop: Button = findViewById<Button>(R.id.ButtonBlStop)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        viewModel = ViewModelProvider(this)[MainScreenViewModel::class.java]
 
         bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
@@ -94,15 +89,24 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Please enable Bluetooth", Toast.LENGTH_SHORT).show()
             return
         }
-        button.setOnClickListener {
-            searchDiveceBle()
-        }
-        buttonStop.setOnClickListener {
-            stopBle()
-        }
-
         enableBluetoothPermission()
+        registerReceiver(bondReceiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
+        val blManager = BluetoothHandler(this, viewModel)
+        binding.ButtonBl.setOnClickListener {
+            blManager.searchBleDevices()
 
+        }
+
+        binding.ButtonBlStop.setOnClickListener {
+            blManager.bleStopSearching()
+        }
+        adapter = AdapterMain()
+        binding.blRecycler.adapter = adapter
+        binding.blRecycler.layoutManager = LinearLayoutManager(this)
+        viewModel.devices.observe(this) { devices ->
+            Log.d("OBSERVER", "LiveData observer triggered! List size: ${devices.size}")
+            adapter.updateList(devices)
+        }
     }
 
     private fun enableBluetoothPermission() {
@@ -112,59 +116,6 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun searchDevice() {
-        if (isReceiverRegistered) {
-            Log.w("Bluetooth", "Receiver already registered")
-            return
-        }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            Log.e("Bluetooth", "Permissions not granted")
-            return
-        }
-
-        val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-        registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        isReceiverRegistered = true
-
-        Log.d("Bluetooth", "Starting discovery...")
-        bluetoothAdapter.startDiscovery()
-    }
-
-    private fun searchDiveceBle(){
-        val bleScanner = bluetoothAdapter.bluetoothLeScanner
-
-        if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
-            Log.d("Bluetooth", "Ble scan started")
-            bleScanner.startScan(scanCalBack)
-        }
-
-    }
-
-    fun stopBle(){
-        val bleScanner = bluetoothAdapter.bluetoothLeScanner
-        if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
-            Log.d("Bluetooth", "Ble scan stoped")
-            bleScanner.stopScan(scanCalBack)
-        }
-    }
-
-
-
-    override fun onDestroy() {
-        if (isReceiverRegistered) {
-            try {
-                unregisterReceiver(receiver)
-                isReceiverRegistered = false
-            } catch (e: IllegalArgumentException) {
-                Log.e("Bluetooth", "Receiver was not registered", e)
-            }
-        }
-        super.onDestroy()
-    }
 
 
 }
