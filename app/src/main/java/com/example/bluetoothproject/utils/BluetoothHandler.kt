@@ -23,23 +23,7 @@ import javax.inject.Inject
 
 class BluetoothHandler (
     private val context: Context,
-    private val viewmodel: MainScreenViewModel
 ) {
-
-
-    val scanCalBack = object : ScanCallback(){
-        override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            if(ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(context,
-                    Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
-            ){
-                val devices = result?.device
-                viewmodel.addDevice(device = devices)
-                Log.d("Bluetooth", "BluetoothBle found device: ${devices?.address}")
-            }
-
-        }
-    }
-
 
     fun getPaired(){
         if(ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
@@ -56,32 +40,6 @@ class BluetoothHandler (
 
     }
 
-    fun searchBleDevices(){
-        val manager = ContextCompat.getSystemService(context, BluetoothManager::class.java) as BluetoothManager
-        val adapter: BluetoothAdapter? = manager.adapter
-        val bleScanner = adapter?.bluetoothLeScanner
-        if(ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
-
-                Log.d("Bluetooth", "Ble start searching")
-                bleScanner?.startScan(scanCalBack)
-            }else{
-                Log.d("Bluetooth", "Permissions not granted")
-            }
-
-
-    }
-
-    fun bleStopSearching(){
-        val manager = ContextCompat.getSystemService(context, BluetoothManager::class.java) as BluetoothManager
-        val adapter: BluetoothAdapter? = manager.adapter
-        val bleScanner = adapter?.bluetoothLeScanner
-        if(ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
-
-            Log.d("Bluetooth", "Ble start searching")
-            bleScanner?.stopScan(scanCalBack)
-        }
-
-    }
     @SuppressLint("MissingPermission")
     fun bondDevice(device: BluetoothDevice){
         when(device.bondState){
@@ -100,9 +58,7 @@ class BluetoothHandler (
         }
     }
 
-    fun connectDevice(device: BluetoothDevice){
 
-    }
 }
 
 

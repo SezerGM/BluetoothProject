@@ -5,15 +5,12 @@ import android.bluetooth.BluetoothDevice
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bluetoothproject.databinding.BlDeviceBinding
-import com.example.bluetoothproject.utils.BluetoothHandler
-import kotlinx.coroutines.flow.Flow
 
 class AdapterMain(
     private var devices: List<BluetoothDevice> = emptyList(),
+    private val onClick: (BluetoothDevice) -> Unit,
 ): RecyclerView.Adapter<AdapterMain.ViewHolderMain>() {
 
     inner class ViewHolderMain(
@@ -27,6 +24,7 @@ class AdapterMain(
 
             binding.root.setOnClickListener {
                 Log.d("Recycler", "User tap on ${device.name}")
+                onClick(device)
             }
         }
     }

@@ -1,9 +1,14 @@
 package com.example.bluetoothproject
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -32,6 +37,7 @@ import com.example.bluetoothproject.ui.viewmodels.MainScreenViewModel
 import com.example.bluetoothproject.utils.BluetoothHandler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -54,6 +60,8 @@ class MainActivity : AppCompatActivity() {
                 val bondState = intent?.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1)
                 when(bondState){
                     BluetoothDevice.BOND_BONDED ->{
+                        Log.d("Bond", "Device bonded")
+                        connectDevice(device!!)
 
                     }
                 }
@@ -61,11 +69,50 @@ class MainActivity : AppCompatActivity() {
 
         }
     }
+    val scanCalBack = object : ScanCallback(){
+        override fun onScanResult(callbackType: Int, result: ScanResult?) {
+            if(ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this@MainActivity,
+                    Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+            ){
+                val devices = result?.device
+                viewModel.addDevice(device = devices)
+                Log.d("Bluetooth", "BluetoothBle found device: ${devices?.address}")
+            }
+
+        }
+    }
 
 
+@SuppressLint("MissingPermission")
+    val gatCallBack = object  : BluetoothGattCallback(){
+        override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+            when(newState){
+                BluetoothProfile.STATE_CONNECTED -> {
+                    Log.d("Gatt","Gatt connected")
+                     gatt?.discoverServices()
+                }
 
+            }
+        }
 
+    override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+        if(status == BluetoothGatt.GATT_SUCCESS){
+            val service = gatt?.getService(UUID.fromString("000018F0-0000-1000-8000-00805F9B34FB"))
+            if(service == null){
+                Log.d("Gatt", "Service null")
+            }
+            val writeCharacteristic = service?.getCharacteristic(UUID.fromString("00002AF1-0000-1000-8000-00805F9B34FB"))
+            if(writeCharacteristic != null){
+                Log.d("Gatt", "Char sended")
+                sendPrintData(gatt, writeCharacteristic)
+            }else{
+                Log.d("Gatt", "Characterictic null")
 
+            }
+
+        }
+    }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,16 +138,20 @@ class MainActivity : AppCompatActivity() {
         }
         enableBluetoothPermission()
         registerReceiver(bondReceiver, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
-        val blManager = BluetoothHandler(this, viewModel)
         binding.ButtonBl.setOnClickListener {
-            blManager.searchBleDevices()
+            searchBleDevices()
 
         }
 
         binding.ButtonBlStop.setOnClickListener {
-            blManager.bleStopSearching()
+            bleStopSearching()
         }
-        adapter = AdapterMain()
+        val blHander = BluetoothHandler(this)
+        adapter = AdapterMain(){
+            device ->
+            val blDevice = bluetoothAdapter.getRemoteDevice(device.address)
+            blHander.bondDevice(blDevice)
+        }
         binding.blRecycler.adapter = adapter
         binding.blRecycler.layoutManager = LinearLayoutManager(this)
         viewModel.devices.observe(this) { devices ->
@@ -114,6 +165,47 @@ class MainActivity : AppCompatActivity() {
             permissionLauncher.launch(arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT))
         }
 
+    }
+    fun searchBleDevices(){
+        val manager = ContextCompat.getSystemService(this, BluetoothManager::class.java) as BluetoothManager
+        val adapter: BluetoothAdapter? = manager.adapter
+        val bleScanner = adapter?.bluetoothLeScanner
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
+
+            Log.d("Bluetooth", "Ble start searching")
+            bleScanner?.startScan(scanCalBack)
+        }else{
+            Log.d("Bluetooth", "Permissions not granted")
+        }
+    }
+
+    fun bleStopSearching(){
+        val manager = ContextCompat.getSystemService(this, BluetoothManager::class.java) as BluetoothManager
+        val adapter: BluetoothAdapter? = manager.adapter
+        val bleScanner = adapter?.bluetoothLeScanner
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
+
+            Log.d("Bluetooth", "Ble start searching")
+            bleScanner?.stopScan(scanCalBack)
+        }
+
+    }
+
+    @SuppressLint("MissingPermission")
+    fun connectDevice(device: BluetoothDevice){
+        device.connectGatt(this, false, gatCallBack)
+    }
+    @SuppressLint("MissingPermission")
+    private fun sendPrintData(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic){
+        val initPrint = byteArrayOf(0x1B, 0x40)
+        val text = "Hello World\n".toByteArray()
+        val lineFeed = byteArrayOf(0x0A)
+
+        val fullCommand = initPrint + text + lineFeed
+
+        characteristic.value = fullCommand
+        characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+        gatt.writeCharacteristic(characteristic)
     }
 
 

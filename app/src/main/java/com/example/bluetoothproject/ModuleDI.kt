@@ -29,6 +29,11 @@ object ModuleDI {
         return application
     }
 
+    @Provides
+    fun createBlHandler(@ApplicationContext application: Application): BluetoothHandler{
+        return BluetoothHandler(application)
+    }
+
 
 
 }
