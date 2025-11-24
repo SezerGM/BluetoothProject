@@ -6,11 +6,6 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.bluetoothproject.recycler.DeviceModel
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 class MainScreenViewModel: ViewModel() {
     private val _devices = MutableLiveData<List<BluetoothDevice>>()
     val devices: LiveData<List<BluetoothDevice>> = _devices

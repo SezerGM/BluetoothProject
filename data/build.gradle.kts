@@ -1,9 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias {libs.plugins.hilt}
-    id("org.jetbrains.kotlin.kapt")
-}
+    id("com.google.devtools.ksp") version "2.0.21-1.0.25"}
 
 android {
     namespace = "com.example.data"
@@ -46,7 +44,5 @@ dependencies {
     //Other modules
     implementation(project(":domain"))
 
-    //DI
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+
 }

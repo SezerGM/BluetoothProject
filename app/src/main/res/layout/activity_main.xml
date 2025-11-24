@@ -7,27 +7,35 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/ButtonBl"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start BL"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/ButtonBlStop"
+        android:id="@+id/print_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Stop BL"
+        android:text="TestPrint"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ButtonBl"
+        app:layout_constraintTop_toBottomOf="@+id/test_print"
         app:layout_constraintVertical_bias="0.037" />
+
+    <Button
+        android:id="@+id/test_print"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Connect Printer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/pick_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pick image"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/print_image" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/bl_recycler"
@@ -35,7 +43,6 @@
         android:layout_height="200dp"
         android:foregroundGravity="center_horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ButtonBlStop"
         android:layout_marginHorizontal="12dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

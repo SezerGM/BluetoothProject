@@ -1,10 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias {libs.plugins.hilt}
-    id("org.jetbrains.kotlin.kapt")
 }
-
 android {
     namespace = "com.example.bluetoothproject"
     compileSdk = 36
@@ -50,11 +47,14 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    //DI
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+
+    //Printer lib
+    implementation("com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0")
 
     //Other modules
     implementation(project(":data"))
-    implementation(project(":domain"))
+
+    //External libs
+    implementation(files("libs/AndroidPrinterSDK4.1.0.jar"))
+    implementation("io.coil-kt:coil:2.7.0")
 }

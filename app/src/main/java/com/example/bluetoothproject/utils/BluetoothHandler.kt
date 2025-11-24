@@ -19,7 +19,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.registerReceiver
 import com.example.bluetoothproject.ui.viewmodels.MainScreenViewModel
 import java.security.Permissions
-import javax.inject.Inject
 
 class BluetoothHandler (
     private val context: Context,
